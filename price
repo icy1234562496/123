@@ -1,0 +1,88 @@
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
+const productList = [
+  { name: "Trina 410w", price: 173 },
+  { name: "Trina 430w", price: 218 },
+  { name: "Trina 435w", price: 184 },
+  { name: "Growatt 5k Off Grid", price: 999 },
+  { name: "Growatt 5k Grid Tie", price: 2166 },
+  { name: "Growatt 6k Grid Tie", price: 2266 },
+  { name: "Sungrow 10k", price: 6669 },
+  { name: "Growatt Meter", price: 230 },
+  { name: "Growatt 5kWh Battery", price: 3399 },
+  { name: "Growatt Battery Base", price: 260 },
+  { name: "Growatt Battery Cable", price: 100 },
+  { name: "Sungrow 5kWh Battery", price: 6670 },
+  { name: "Sungrow Base Kit", price: 3500 },
+  { name: "Installation", price: 0 },
+  { name: "Shine Master", price: 500 }
+];
+
+export default function SolarPricingApp() {
+  const [items, setItems] = useState([{ product: "", qty: 1 }]);
+
+  const addItem = () => {
+    setItems([...items, { product: "", qty: 1 }]);
+  };
+
+  const updateItem = (index, key, value) => {
+    const newItems = [...items];
+    newItems[index][key] = key === "qty" ? parseInt(value) || 0 : value;
+    setItems(newItems);
+  };
+
+  const getPrice = (productName) => {
+    const item = productList.find(p => p.name === productName);
+    return item ? item.price : 0;
+  };
+
+  const totals = items.reduce((acc, item) => {
+    const price = getPrice(item.product);
+    const totalIncl = price * item.qty;
+    const gst = totalIncl * 15 / 115;
+    const excl = totalIncl - gst;
+    acc.incl += totalIncl;
+    acc.gst += gst;
+    acc.excl += excl;
+    return acc;
+  }, { incl: 0, gst: 0, excl: 0 });
+
+  return (
+    <div className="p-4 space-y-4">
+      {items.map((item, index) => (
+        <Card key={index}>
+          <CardContent className="p-4 space-y-2">
+            <Select value={item.product} onValueChange={(val) => updateItem(index, "product", val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Product" />
+              </SelectTrigger>
+              <SelectContent>
+                {productList.map(p => (
+                  <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              value={item.qty}
+              min={1}
+              onChange={(e) => updateItem(index, "qty", e.target.value)}
+              placeholder="Quantity"
+            />
+            <div>Unit Price: ${getPrice(item.product).toFixed(2)}</div>
+            <div>Total (incl. GST): ${(getPrice(item.product) * item.qty).toFixed(2)}</div>
+          </CardContent>
+        </Card>
+      ))}
+      <button onClick={addItem} className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow">Add Item</button>
+      <div className="p-4 bg-gray-100 rounded-xl shadow space-y-2">
+        <div><strong>Total incl. GST:</strong> ${totals.incl.toFixed(2)}</div>
+        <div><strong>GST (15%):</strong> ${totals.gst.toFixed(2)}</div>
+        <div><strong>Total excl. GST:</strong> ${totals.excl.toFixed(2)}</div>
+      </div>
+    </div>
+  );
+}
